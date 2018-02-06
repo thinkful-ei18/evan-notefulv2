@@ -1,45 +1,54 @@
 'use strict';
 
+
+
 const express = require('express');
 
 // Create an router instance (aka "mini-app")
 const router = express.Router();
 
-// TEMP: Simple In-Memory Database
-/* 
-const data = require('../db/notes');
-const simDB = require('../db/simDB');
-const notes = simDB.initialize(data);
-*/
+const knex = require('../knex');
 
 // Get All (and search by query)
 /* ========== GET/READ ALL NOTES ========== */
 router.get('/notes', (req, res, next) => {
   const { searchTerm } = req.query;
-  /* 
-  notes.filter(searchTerm)
-    .then(list => {
-      res.json(list);
-    })
-    .catch(err => next(err)); 
-  */
+  
+  if (searchTerm) {
+    knex
+      .select('title','content','id', 'created')
+      .from('notes')
+      .where('title','like', `%${searchTerm}%`)
+      .orWhere('content','like', `%${searchTerm}%`)
+      .then(list => {
+        res.json(list);
+      })
+      .catch(err => next(err)); 
+  } else {
+    knex
+      .select('title','content','id','created')
+      .from('notes')
+      .then(list => {
+        res.json(list);
+      })
+      .catch(err => next(err)); 
+  }
 });
 
 /* ========== GET/READ SINGLE NOTES ========== */
 router.get('/notes/:id', (req, res, next) => {
   const noteId = req.params.id;
 
-  /*
-  notes.find(noteId)
-    .then(item => {
+  knex
+    .first('title','content','id')
+    .from('notes')
+    .where('id',`${noteId}`)
+    .then((item) => {
       if (item) {
         res.json(item);
-      } else {
-        next();
       }
-    })
-    .catch(err => next(err));
-  */
+    });
+
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
@@ -62,17 +71,16 @@ router.put('/notes/:id', (req, res, next) => {
     return next(err);
   }
 
-  /*
-  notes.update(noteId, updateObj)
-    .then(item => {
+  knex('notes')
+    .where('id',`${noteId}`)
+    .update(updateObj)
+    .then((item) => {
       if (item) {
         res.json(item);
       } else {
         next();
       }
-    })
-    .catch(err => next(err));
-  */
+    });
 });
 
 /* ========== POST/CREATE ITEM ========== */
@@ -87,21 +95,34 @@ router.post('/notes', (req, res, next) => {
     return next(err);
   }
 
-  /*
-  notes.create(newItem)
+  knex('notes')
+    .insert(newItem)
     .then(item => {
       if (item) {
         res.location(`http://${req.headers.host}/notes/${item.id}`).status(201).json(item);
       } 
     })
-    .catch(err => next(err));
-  */
+    .catch(err => console.log(err));
+
 });
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/notes/:id', (req, res, next) => {
   const id = req.params.id;
   
+
+  knex('notes')
+    .where('id',`${id}`)
+    .del()
+    .then(count => {
+      if (count) {
+        res.status(204).end();
+      } else {
+        next();
+      }
+    });
+
+
   /*
   notes.delete(id)
     .then(count => {

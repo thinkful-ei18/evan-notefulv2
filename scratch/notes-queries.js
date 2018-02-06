@@ -11,6 +11,9 @@ if (searchTerm) {
     .where(`${searchTerm}`)
     .then((response) => {
       console.log(response);
+    })
+    .catch((err) => {
+      console.log(err);
     });
 } else {
   knex
@@ -18,17 +21,20 @@ if (searchTerm) {
     .from('notes')
     .then((response) => {
       console.log(response);
+    })
+    .catch((err) => {
+      console.log(err);
     });
 }
 
-// const id = '1001';
-// knex
-//   .select('title','content','id')
-//   .from('notes')
-//   .where('id',`${id}`)
-//   .then((response) => {
-//     console.log(response[0].title);
-//   });
+const id = '1001';
+knex
+  .select('title','content','id')
+  .from('notes')
+  .where('id',`${id}`)
+  .then((response) => {
+    console.log(response[0].title);
+  });
 
 
 // const noteID = '1004';
