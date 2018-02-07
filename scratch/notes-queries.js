@@ -41,12 +41,12 @@ knex
 // const updateObj = 
 // {title:'testing 987'};
 
-// knex('notes')
-//   .where('id',`${noteID}`)
-//   .update(updateObj)
-//   .then((response) => {
-//     console.log(response);
-//   }); 
+knex('notes')
+  .where('id',`${noteID}`)
+  .update(updateObj)
+  .then((response) => {
+    console.log(response);
+  }); 
 
 // router.post('/notes', (req, res, next) => {
 //   const { title, content } = req.body;
@@ -83,11 +83,11 @@ knex
 
 // const newItem = {title:'testing 12353247', content:'I have three jellyfish'};
 
-// knex('notes')
-//   .insert(newItem)
-//   .then((response) => {
-//     console.log(response);
-//   }); 
+knex('notes')
+  .insert(newItem)
+  .then((response) => {
+    console.log(response);
+  }); 
 
 
 // router.delete('/notes/:id', (req, res, next) => {
@@ -107,12 +107,12 @@ knex
 // });
 
 // const id = 1005;
-// knex('notes')
-//   .where('id',`${id}`)
-//   .del()
-//   .then((results) => {
-//     console.log(results);
-//   });
+knex('notes')
+  .where('id',`${id}`)
+  .del()
+  .then((results) => {
+    console.log(results);
+  });
 
 
 
