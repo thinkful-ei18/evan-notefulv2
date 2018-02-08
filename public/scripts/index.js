@@ -7,6 +7,11 @@ $(document).ready(function () {
   api.search('/v2/notes')
     .then(response => {
       store.notes = response;
+    });
+
+  api.search('/v2/folders')
+    .then(response => {
+      store.folders = response;
       noteful.render();
     });
 

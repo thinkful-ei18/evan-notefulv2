@@ -13,27 +13,6 @@ const knex = require('../knex');
 /* ========== GET/READ ALL NOTES ========== */
 router.get('/notes', (req, res, next) => {
   const { searchTerm } = req.query;
-  
-  // if (searchTerm) {
-  //   knex
-  //     .select('title','content','id', 'created')
-  //     .from('notes')
-  //     .where('title','like', `%${searchTerm}%`)
-  //     .orWhere('content','like', `%${searchTerm}%`)
-  //     .then(list => {
-  //       res.json(list);
-  //     })
-  //     .catch(err => next(err)); 
-  // } else {
-  //   knex
-  //     .select('title','content','id','created')
-  //     .from('notes')
-  //     .then(list => {
-  //       res.json(list);
-  //     })
-  //     .catch(err => next(err)); 
-  // }
-
   if (searchTerm) {
     knex
       .select('notes.title','notes.content','notes.id', 'notes.created', 'folders.name as folderName','folders.id as folderId')
@@ -50,6 +29,11 @@ router.get('/notes', (req, res, next) => {
       .select('notes.title','notes.content','notes.id', 'notes.created', 'folders.name as folderName','folders.id as folderId')
       .from('notes')
       .leftJoin('folders','notes.folder_id','folders.id')
+      .where(function () {
+        if (req.query.folderId) {
+          this.where('folder_id',req.query.folderId);
+        }
+      })
       .then(list => {
         res.json(list);
       })
@@ -106,17 +90,20 @@ router.put('/notes/:id', (req, res, next) => {
   knex('notes')
     .update(updateObj)
     .returning('id')
+    .where('notes.id',noteId)
     .then(([id]) => { 
-      knex
+      return knex
         .first('notes.title','notes.content','notes.id', 'notes.created', 'folders.name as folderName','folders.id as folderId')
         .from('notes')
         .leftJoin('folders','notes.folder_id','folders.id')
-        .where('notes.id',id)
-        .then((response) => res.status(204).json(response));
+        .where('notes.id',id);
+    })
+    .then((response) => {
+      res.json(response);
     })
     .catch(err => console.log(err));
-
 });
+
 
 /* ========== POST/CREATE ITEM ========== */
 router.post('/notes', (req, res, next) => {
@@ -139,13 +126,13 @@ router.post('/notes', (req, res, next) => {
     .insert(newItem)
     .returning('id')
     .then(([id]) => { 
-      knex
+      return knex
         .first('notes.title','notes.content','notes.id', 'notes.created', 'folders.name as folderName','folders.id as folderId')
         .from('notes')
         .leftJoin('folders','notes.folder_id','folders.id')
-        .where('notes.id',id)
-        .then((response) => res.status(204).json(response));
+        .where('notes.id',id);
     })
+    .then((response) => res.status(201).json(response))
     .catch(err => console.log(err));
 
 });
