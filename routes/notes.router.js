@@ -45,15 +45,6 @@ router.get('/notes', (req, res, next) => {
 router.get('/notes/:id', (req, res, next) => {
   const noteId = req.params.id;
 
-  // knex
-  //   .first('title','content','id')
-  //   .from('notes')
-  //   .where('id',`${noteId}`)
-  //   .then((item) => {
-  //     if (item) {
-  //       res.json(item);
-  //     }
-  //   });
 
   knex
     .first('notes.title','notes.content','notes.id', 'notes.created', 'folders.name as folderName','folders.id as folderId')
