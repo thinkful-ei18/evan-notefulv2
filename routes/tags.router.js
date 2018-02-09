@@ -47,7 +47,7 @@ router.post('/tags', (req,res,next) => {
     .insert(newTag)
     .returning(['id','name'])
     .then(([result]) => {
-      res.location(`${req.originalUrl}/${result.id}`).status(204).json(result);
+      res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
     })
     .catch(err => {
       if (err.code === UNIQUE_VIOLATION && err.constraint === 'tags_name_key') {
