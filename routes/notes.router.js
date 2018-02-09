@@ -25,10 +25,11 @@ router.get('/notes', (req, res, next) => {
     .leftJoin('folders','notes.folder_id','folders.id')
     .leftJoin('notes_tags','notes.id','notes_tags.note_id')
     .leftJoin('tags','notes_tags.tag_id','tags.id')
-    .where(() => {
+    .where(function () {
       if (searchTerm) { 
-        this.where('title','like', `%${searchTerm}%`);
-        this.orWhere('content','like', `%${searchTerm}%`);
+        this.where('notes.title','like', `%${searchTerm}%`);
+        this.orWhere('notes.content','like', `%${searchTerm}%`);
+        this.orWhere('folders.name','like', `%${searchTerm}%`);
       }
     })
     .where(function () {
@@ -71,14 +72,20 @@ router.get('/notes/:id', (req, res, next) => {
     .leftJoin('tags','notes_tags.tag_id','tags.id')
     .where('notes.id',noteId)
     .then(results => {
+      if (results.length === 0 ) {
+        const err = new Error();
+        err.status = 404;
+        next(err);
+      }
       const treeize = new Treeize();
       treeize.setOptions({output: { prune:false}});
       treeize.grow(results);
       const hydrated = treeize.getData();
       res.json(hydrated[0]);
     })
-    .catch(err => next(err)); 
-
+    .catch(err => {
+      next(err); 
+    });
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
@@ -141,14 +148,22 @@ router.put('/notes/:id', (req, res, next) => {
         .where('notes.id',noteId);
     })
     .then((note) => {
+      if (note.length === 0 ) {
+        const error = new Error('Not Found');
+        error.status =404;
+        next(error);
+      }
       const treeize = new Treeize();
       treeize.setOptions({output: { prune:false}});
       treeize.grow(note);
       const hydrated = treeize.getData();
-      res.json(hydrated);
+      res.json(hydrated[0]);
 
     })
-    .catch(err => console.log(err));
+    .catch(err =>{
+      err.status= 404;
+      next(err);
+    });
 });
 
 
@@ -206,10 +221,10 @@ router.post('/notes', (req, res, next) => {
       treeize.setOptions({output: { prune:false}});
       treeize.grow(note);
       const hydrated = treeize.getData();
-      res.json(hydrated);
+      res.status(201).json(hydrated[0]);
 
     })
-    .catch(err => console.log(err));
+    .catch(err => next(err));
 
 });
 
