@@ -4,6 +4,7 @@
 const store = (function () {
 
   return {
+    tags: [],
     notes: [],
     folders: [],
     currentNote: {},

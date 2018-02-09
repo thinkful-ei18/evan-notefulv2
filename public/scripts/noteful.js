@@ -11,6 +11,15 @@ const noteful = (function () {
     $('.js-folders-list').html(folderList);
     const folderSelect = generateFolderSelect(store.folders);
     $('.js-note-folder-entry').html(folderSelect);
+    const tagsList = generateTagsList(store.tags, store.currentQuery);
+    $('.js-tags-list').html(tagsList);
+    const tagsSelect = generateTagsSelect(store.tags);
+    $('.js-note-tags-entry').html(tagsSelect);
+    editForm.find('.js-note-tags-entry').val(() => {
+      if (store.currentNote.tags) {
+        return store.currentNote.tags.map(tag => tag.id);
+      }
+    });
 
     const editForm = $('.js-note-edit-form');
     editForm.find('.js-note-title-entry').val(store.currentNote.title);
@@ -23,18 +32,39 @@ const noteful = (function () {
    * GENERATE HTML FUNCTIONS
    */
   function generateNotesList(list, currNote) {
-    console.log(list);
-    const listItems = list.map(item => {
-      return `
+    const listItems = list.map(item => `
       <li data-id="${item.id}" class="js-note-element ${currNote.id === item.id ? 'active' : ''}">
         <a href="#" class="name js-note-link">${item.title}</a>
         <button class="removeBtn js-note-delete-button">X</button>
         <div class="metadata">
             <div class="date">${moment(item.created).calendar()}</div>
+            <div class="tags">${getTagsCommaSeparated(item.tags)}</div>
           </div>
-      </li>`;
-    });
+      </li>`);
     return listItems.join('');
+  }
+
+  function getTagsCommaSeparated(tags) {
+    return tags ? tags.map(tag => tag.name).join(', ') : '';
+  }
+
+  function generateTagsSelect(list) {
+    const notes = list.map(item => `<option value="${item.id}">${item.name}</option>`);
+    return notes.join('');
+  }
+
+  function generateTagsList(list, currQuery) {
+    const showAllItem = `
+      <li data-id="" class="js-tag-item ${!currQuery.tagId ? 'active' : ''}">
+        <a href="#" class="name js-tag-link">All</a>
+      </li>`;
+
+    const listItems = list.map(item => `
+      <li data-id="${item.id}" class="js-tag-item ${currQuery.tagId === item.id ? 'active' : ''}">
+        <a href="#" class="name js-tag-link">${item.name}</a>
+        <button class="removeBtn js-tag-delete">X</button>
+      </li>`);
+    return [showAllItem, ...listItems].join('');
   }
   
   function generateFolderSelect(list) {
@@ -146,10 +176,14 @@ const noteful = (function () {
       event.preventDefault();
 
       const editForm = $(event.currentTarget);
-      console.log('this is store');
-      console.dir(store);
+      let noteObj = {
+        id: store.currentNote.id,
+        title: editForm.find('.js-note-title-entry').val(),
+        content: editForm.find('.js-note-content-entry').val(),
+        folder_id: editForm.find('.js-note-folder-entry').val(),
+        tags: editForm.find('.js-note-tags-entry').val() // <<== Add this
+      };
 
-      let noteObj;
 
       if (editForm.find('.js-note-folder-entry').val()) {
 
