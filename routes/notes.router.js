@@ -14,6 +14,8 @@ const knex = require('../knex');
 router.get('/notes', (req, res, next) => {
   const { searchTerm } = req.query;
   const { tagId } = req.query;
+  const { folderId } = req.query;
+  console.log(req.query);
 
   knex
     .select('notes.title','notes.content','notes.id', 'notes.created',
@@ -37,6 +39,11 @@ router.get('/notes', (req, res, next) => {
           .innerJoin('notes_tags', 'notes.id', 'notes_tags.note_id')
           .where('notes_tags.tag_id', tagId);
         this.whereIn('notes.id', subQuery);
+      }
+    })
+    .where(() => {
+      if (folderId) { 
+        this.where('folders.id', folderId);
       }
     })
 
