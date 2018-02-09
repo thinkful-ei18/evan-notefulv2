@@ -13,6 +13,8 @@ const knex = require('../knex');
 /* ========== GET/READ ALL NOTES ========== */
 router.get('/notes', (req, res, next) => {
   const { searchTerm } = req.query;
+  const { tagId } = req.query;
+
   knex
     .select('notes.title','notes.content','notes.id', 'notes.created',
       'folders.name as folderName',
@@ -28,13 +30,21 @@ router.get('/notes', (req, res, next) => {
         this.orWhere('content','like', `%${searchTerm}%`);
       }
     })
+    .where(function () {
+      if (tagId) {
+        const subQuery = knex.select('notes.id')
+          .from('notes')
+          .innerJoin('notes_tags', 'notes.id', 'notes_tags.note_id')
+          .where('notes_tags.tag_id', tagId);
+        this.whereIn('notes.id', subQuery);
+      }
+    })
 
     .then(results => {
       const treeize = new Treeize();
       treeize.setOptions({ output: { prune: false}});
       treeize.grow(results);
       const hydrated = treeize.getData();
-      console.log(hydrated);
       res.json(hydrated);
     })
     .catch(err => next(err)); 
@@ -46,12 +56,20 @@ router.get('/notes/:id', (req, res, next) => {
 
 
   knex
-    .first('notes.title','notes.content','notes.id', 'notes.created', 'folders.name as folderName','folders.id as folderId')
+    .select('notes.title','notes.content','notes.id', 'notes.created',
+      'folders.name as folderName',
+      'folders.id as folderId','tags.name as tags:name','tags.id as tags:id')
     .from('notes')
     .leftJoin('folders','notes.folder_id','folders.id')
+    .leftJoin('notes_tags','notes.id','notes_tags.note_id')
+    .leftJoin('tags','notes_tags.tag_id','tags.id')
     .where('notes.id',noteId)
-    .then(list => {
-      res.json(list);
+    .then(results => {
+      const treeize = new Treeize();
+      treeize.setOptions({output: { prune:false}});
+      treeize.grow(results);
+      const hydrated = treeize.getData();
+      res.json(hydrated);
     })
     .catch(err => next(err)); 
 
@@ -63,6 +81,7 @@ router.put('/notes/:id', (req, res, next) => {
   /***** Never trust users - validate input *****/
   const updateObj = {};
   const updateableFields = ['title', 'content','folder_id'];
+  const {tags} = req.body;
 
   updateableFields.forEach(field => {
     if (field in req.body) {
@@ -77,19 +96,45 @@ router.put('/notes/:id', (req, res, next) => {
     return next(err);
   }
 
+
   knex('notes')
     .update(updateObj)
-    .returning('id')
     .where('notes.id',noteId)
-    .then(([id]) => { 
-      return knex
-        .first('notes.title','notes.content','notes.id', 'notes.created', 'folders.name as folderName','folders.id as folderId')
-        .from('notes')
-        .leftJoin('folders','notes.folder_id','folders.id')
-        .where('notes.id',id);
+    .then(() => {
+      if (tags) {
+        return knex('notes_tags')
+          .del()
+          .where('notes_tags.note_id',noteId);
+      } else {
+        return null;
+      }
     })
-    .then((response) => {
-      res.json(response);
+    .then(() => { 
+      if (tags) {
+        const tagsInsert = tags.map(tagId => ({note_id: noteId, tag_id:tagId}));
+        return knex('notes_tags')
+          .insert(tagsInsert);
+      } else {
+        return null;
+      }
+    })
+    .then(() => {
+      return knex('notes')
+        .select('notes.title','notes.content','notes.id', 'notes.created',
+          'folders.name as folderName',
+          'folders.id as folderId','tags.name as tags:name','tags.id as tags:id')
+        .leftJoin('folders','notes.folder_id','folders.id')
+        .leftJoin('notes_tags','notes.id','notes_tags.note_id')
+        .leftJoin('tags','notes_tags.tag_id','tags.id')
+        .where('notes.id',noteId);
+    })
+    .then((note) => {
+      const treeize = new Treeize();
+      treeize.setOptions({output: { prune:false}});
+      treeize.grow(note);
+      const hydrated = treeize.getData();
+      res.json(hydrated);
+
     })
     .catch(err => console.log(err));
 });
@@ -97,7 +142,8 @@ router.put('/notes/:id', (req, res, next) => {
 
 /* ========== POST/CREATE ITEM ========== */
 router.post('/notes', (req, res, next) => {
-  const {title, content, folder_id} = req.body;
+  const {title, content, folder_id, tags} = req.body;
+
   
   const newItem = { 
     title,
@@ -112,17 +158,39 @@ router.post('/notes', (req, res, next) => {
     return next(err);
   }
 
-  knex('notes')
-    .insert(newItem)
+  let noteId;
+
+  knex.insert(newItem)
+    .from('notes')
     .returning('id')
     .then(([id]) => { 
-      return knex
-        .first('notes.title','notes.content','notes.id', 'notes.created', 'folders.name as folderName','folders.id as folderId')
-        .from('notes')
-        .leftJoin('folders','notes.folder_id','folders.id')
-        .where('notes.id',id);
+      noteId = id;
+      if (tags) {
+        const tagsInsert = tags.map(tagId => ({note_id: noteId, tag_id:tagId}));
+        return knex.insert(tagsInsert)
+          .into('notes_tags');
+      } else {
+        return null;
+      }
     })
-    .then((response) => res.status(201).json(response))
+    .then(() => {
+      return knex('notes')
+        .select('notes.title','notes.content','notes.id', 'notes.created',
+          'folders.name as folderName',
+          'folders.id as folderId','tags.name as tags:name','tags.id as tags:id')
+        .leftJoin('folders','notes.folder_id','folders.id')
+        .leftJoin('notes_tags','notes.id','notes_tags.note_id')
+        .leftJoin('tags','notes_tags.tag_id','tags.id')
+        .where('notes.id',noteId);
+    })
+    .then((note) => {
+      const treeize = new Treeize();
+      treeize.setOptions({output: { prune:false}});
+      treeize.grow(note);
+      const hydrated = treeize.getData();
+      res.json(hydrated);
+
+    })
     .catch(err => console.log(err));
 
 });
@@ -144,17 +212,6 @@ router.delete('/notes/:id', (req, res, next) => {
     });
 
 
-  /*
-  notes.delete(id)
-    .then(count => {
-      if (count) {
-        res.status(204).end();
-      } else {
-        next();
-      }
-    })
-    .catch(err => next(err));
-  */
 });
 
 module.exports = router;
