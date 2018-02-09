@@ -6,39 +6,38 @@ const express = require('express');
 
 // Create an router instance (aka "mini-app")
 const router = express.Router();
-
+const Treeize = require('treeize');
 const knex = require('../knex');
 
 // Get All (and search by query)
 /* ========== GET/READ ALL NOTES ========== */
 router.get('/notes', (req, res, next) => {
   const { searchTerm } = req.query;
-  if (searchTerm) {
-    knex
-      .select('notes.title','notes.content','notes.id', 'notes.created', 'folders.name as folderName','folders.id as folderId')
-      .from('notes')
-      .leftJoin('folders','notes.folder_id','folders.id')
-      .where('title','like', `%${searchTerm}%`)
-      .orWhere('content','like', `%${searchTerm}%`)
-      .then(list => {
-        res.json(list);
-      })
-      .catch(err => next(err)); 
-  } else {
-    knex
-      .select('notes.title','notes.content','notes.id', 'notes.created', 'folders.name as folderName','folders.id as folderId')
-      .from('notes')
-      .leftJoin('folders','notes.folder_id','folders.id')
-      .where(function () {
-        if (req.query.folderId) {
-          this.where('folder_id',req.query.folderId);
-        }
-      })
-      .then(list => {
-        res.json(list);
-      })
-      .catch(err => next(err)); 
-  }
+  knex
+    .select('notes.title','notes.content','notes.id', 'notes.created',
+      'folders.name as folderName',
+      'folders.id as folderId','tags.name as tags:name','tags.id as tags:id')
+      
+    .from('notes')
+    .leftJoin('folders','notes.folder_id','folders.id')
+    .leftJoin('notes_tags','notes.id','notes_tags.note_id')
+    .leftJoin('tags','notes_tags.tag_id','tags.id')
+    .where(() => {
+      if (searchTerm) { 
+        this.where('title','like', `%${searchTerm}%`);
+        this.orWhere('content','like', `%${searchTerm}%`);
+      }
+    })
+
+    .then(results => {
+      const treeize = new Treeize();
+      treeize.setOptions({ output: { prune: false}});
+      treeize.grow(results);
+      const hydrated = treeize.getData();
+      console.log(hydrated);
+      res.json(hydrated);
+    })
+    .catch(err => next(err)); 
 });
 
 /* ========== GET/READ SINGLE NOTES ========== */
