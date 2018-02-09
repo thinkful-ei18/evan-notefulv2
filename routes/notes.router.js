@@ -15,7 +15,6 @@ router.get('/notes', (req, res, next) => {
   const { searchTerm } = req.query;
   const { tagId } = req.query;
   const { folderId } = req.query;
-  console.log(req.query);
 
   knex
     .select('notes.title','notes.content','notes.id', 'notes.created',
@@ -41,9 +40,9 @@ router.get('/notes', (req, res, next) => {
         this.whereIn('notes.id', subQuery);
       }
     })
-    .where(() => {
-      if (folderId) { 
-        this.where('folders.id', folderId);
+    .where(function () {
+      if (folderId) {
+        this.where('notes.folder_id', folderId);
       }
     })
 
@@ -76,7 +75,7 @@ router.get('/notes/:id', (req, res, next) => {
       treeize.setOptions({output: { prune:false}});
       treeize.grow(results);
       const hydrated = treeize.getData();
-      res.json(hydrated);
+      res.json(hydrated[0]);
     })
     .catch(err => next(err)); 
 
@@ -88,13 +87,19 @@ router.put('/notes/:id', (req, res, next) => {
   /***** Never trust users - validate input *****/
   const updateObj = {};
   const updateableFields = ['title', 'content','folder_id'];
-  const {tags} = req.body;
+  const { tags } = req.body;
 
+  
   updateableFields.forEach(field => {
     if (field in req.body) {
       updateObj[field] = req.body[field];
     }
   });
+
+  if (updateObj.folder_id === '') {
+    delete updateObj.folder_id;
+  }
+
 
   /***** Never trust users - validate input *****/
   if (!updateObj.title) {
@@ -150,13 +155,19 @@ router.put('/notes/:id', (req, res, next) => {
 /* ========== POST/CREATE ITEM ========== */
 router.post('/notes', (req, res, next) => {
   const {title, content, folder_id, tags} = req.body;
-
   
   const newItem = { 
     title,
     content,
     folder_id
   };
+
+  if (folder_id) {
+    newItem.folder_id = folder_id;
+  }
+
+
+
 
   /***** Never trust users - validate input *****/
   if (!newItem.title) {

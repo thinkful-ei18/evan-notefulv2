@@ -2,7 +2,6 @@
 'use strict';
 
 const noteful = (function () {
-    console.log(store.currentQuery);
   function render() {  
     const notesList = generateNotesList(store.notes, store.currentNote);
     $('.js-notes-list').html(notesList);
@@ -17,6 +16,7 @@ const noteful = (function () {
 
     const editForm = $('.js-note-edit-form');
     editForm.find('.js-note-title-entry').val(store.currentNote.title);
+    console.log('store: ',store);
     editForm.find('.js-note-content-entry').val(store.currentNote.content);
     //NOTE: Incoming folder id for API is `folder_id`, locally it is folderId
     editForm.find('.js-note-folder-entry').val(store.currentNote.folder_id);
@@ -25,7 +25,6 @@ const noteful = (function () {
         return store.currentNote.tags.map(tag => tag.id);
       }
     });
-
   }
 
   /**
@@ -109,6 +108,7 @@ const noteful = (function () {
       api.details(`/v2/notes/${noteId}`)
         .then((response) => {
           store.currentNote = response;
+          console.log(store.currentNote);
           render();
         });
     });
