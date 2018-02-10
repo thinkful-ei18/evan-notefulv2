@@ -17,15 +17,22 @@ router.get('/folders', (req,res) => {
 });
 
 
-router.get('/folders/:id', (req,res) => {
+router.get('/folders/:id', (req,res,next) => {
   const {id} = req.params;
   knex
     .select('name','id')
     .from('folders')
     .where('id',`${id}`)
     .then((folder) => {
-      res.json(folder);
+      if (folder) {
+        res.json(folder[0]);
+      } else {
+        const err = new Error();
+        err.status=404;
+        next(err);
+      }
     })
+  
     .catch((err) => {
       console.log(err);
     });

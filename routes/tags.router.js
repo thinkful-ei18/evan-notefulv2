@@ -24,14 +24,23 @@ router.get('/tags', (req,res) => {
 
 
 // GET TAG BY ID
-router.get('/tags/:id', (req,res) => {
+router.get('/tags/:id', (req,res,next) => {
   const { id } = req.params;
 
   knex('tags')
     .first('name','id')
     .where('id',id)
     .then((response) => {
-      res.json(response);
+      if (response) {
+        res.json(response);
+      } else {
+        const err = new Error();
+        err.status= 404;
+        next(err);
+      }
+    })
+    .catch(err => {
+      next(err);
     });
 });
 
@@ -81,7 +90,6 @@ router.put('/tags/:id', (req,res,next) => {
       }
       next(err);
     }); 
-
 });
 
 

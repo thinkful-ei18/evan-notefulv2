@@ -451,4 +451,223 @@ describe('GET /v2/tags', function () {
         expect(response.body[0]).to.have.keys('name','id');
       });
   });
+
+});
+
+
+describe('GET /v2/tags/:id', function () {
+
+  it('should return correct tag', function () {
+    return chai.request(app)
+      .get('/v2/tags/1')
+      .then(function (res) {
+        expect(res).to.have.status(200);
+        expect(res).to.be.json;
+        expect(res.body).to.include.keys('id', 'name');
+        expect(res.body.id).to.equal(1);
+        expect(res.body.name).to.equal('foo');
+      });
+  });
+
+  it('should produce a 404 error on query of non-existent tag id', function () {
+    const spy = chai.spy();
+    return chai.request(app)
+      .get('/v2/tags/99999')
+      .then(spy)
+      .then((response) => {
+        expect(spy).to.not.have.been.called;
+        expect(response).to.have.status(404);
+        expect(response).to.be.json;
+      })
+      .catch(err => {
+        expect(err).to.have.status(404);
+      });
+  });
+});
+
+
+describe('DELETE /v2/tags/:id', function () { 
+  it('should remove an item from tags when an item is deleted', function () {
+    return chai.request(app)
+      .delete('/v2/tags/1')
+      .then(response => {
+        expect(response).to.have.status(204);
+        return chai.request(app).get('/v2/tags');
+      })
+      .then((response) => {
+        expect(response.body.length).to.equal(3);
+        let count;
+        return knex('tags')
+          .count()
+          .then(([response]) => {
+            count = Number(response.count);
+            expect(count).to.equal(3);
+          });
+      });
+  });
+
+});
+
+
+describe('PUT /v2/tags/:id', function () {
+  it('Should update a tag correctly when making a valid Put request',function() {
+    const newItem = {'name':'Different Tag Name'};
+    return chai.request(app)
+      .put('/v2/tags/1')
+      .send(newItem)
+      .then((response) => {
+        expect(response.body.name).to.equal('Different Tag Name');
+        expect(response).to.have.status(201);
+        expect(response.body).to.have.keys('name','id');
+      });
+  });
+
+  it ('Should return a 404 request when a PUT request is made to a non-existent ID', function () {
+    const newItem = {'name':'Different Tag Name'};
+    const spy = chai.spy();
+    return chai.request(app)
+      .put('/v2/tags/2345')
+      .send(newItem)
+      .then(spy)
+      .then((response) => {
+        // expect(spy).to.not.have.been.called();
+      })
+      .catch(err => {
+        expect(err.response).to.have.status(404);
+      });
+  });
+});
+
+
+
+
+
+
+
+
+
+
+// FOLDERS
+
+
+describe('GET /v2/folders', function () {
+  it('should return the entire list of folders', function () {
+    return chai.request(app)
+      .get('/v2/folders')
+      .then((response) => {
+        expect(response.body.length).to.equal(4);
+        expect(response).to.have.status(200);
+        expect(response.body[0]).to.have.keys('name','id');
+      });
+  });
+
+});
+
+
+describe('GET /v2/folders/:id', function () {
+
+  it('should return correct folder', function () {
+    return chai.request(app)
+      .get('/v2/folders/100')
+      .then(function (res) {
+        expect(res).to.have.status(200);
+        expect(res).to.be.json;
+        expect(res.body).to.include.keys('id', 'name');
+        expect(res.body.id).to.equal(100);
+        expect(res.body.name).to.equal('Archive');
+      });
+  });
+
+  it('should produce a 404 error on query of non-existent folder id', function () {
+    const spy = chai.spy();
+    return chai.request(app)
+      .get('/v2/folders/99999')
+      .then(spy)
+      .then((response) => {
+        expect(spy).to.not.have.been.called;
+        expect(response).to.have.status(404);
+        expect(response).to.be.json;
+      })
+      .catch(err => {
+        expect(err).to.have.status(404);
+      });
+  });
+});
+
+
+
+describe('POST /v2/folders', function () {
+  it('should increase the folder count by one', function () {
+    const newItem = {'name':'New Folder!'};
+    return chai.request(app)
+      .post('/v2/folders')
+      .send(newItem)
+      .then((response) => {
+        expect(response).to.have.status(201);
+        let count;
+        return knex('folders')
+          .count()
+          .then(([response]) => {
+            count = Number(response.count);
+            expect(count).to.equal(5);
+          });
+      });
+  });
+});
+
+describe('DELETE /v2/folders/:id', function () { 
+  it('should remove an item from folders when an item is deleted', function () {
+    return chai.request(app)
+      .delete('/v2/folders/100')
+      .then(response => {
+        expect(response).to.have.status(204);
+        return chai.request(app).get('/v2/folders');
+      })
+      .then((response) => {
+        expect(response.body.length).to.equal(3);
+        let count;
+        return knex('folders')
+          .count()
+          .then(([response]) => {
+            count = Number(response.count);
+            expect(count).to.equal(3);
+          });
+      });
+  });
+
+});
+
+
+describe('PUT /v2/folders/:id', function () {
+  it('Should update a folder correctly when making a valid Put request',function() {
+    const newItem = {'name':'Different Folder Name'};
+    return chai.request(app)
+      .put('/v2/folders/100')
+      .send(newItem)
+      .then((response) => {
+        console.log(response);
+        return knex('folders')
+          .select('id')
+          .where('id','100')
+          .then(([response]) => {
+            expect(response.id).to.equal(100);
+          });
+
+      });
+  });
+
+  it ('Should return a 404 request when a PUT request is made to a non-existent ID', function () {
+    const newItem = {'name':'Different Folder Name'};
+    const spy = chai.spy();
+    return chai.request(app)
+      .put('/v2/folders/2345')
+      .send(newItem)
+      .then(spy)
+      .then((response) => {
+        // expect(spy).to.not.have.been.called();
+      })
+      .catch(err => {
+        expect(err.response).to.have.status(404);
+      });
+  });
 });
