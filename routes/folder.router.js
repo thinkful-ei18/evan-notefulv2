@@ -24,17 +24,18 @@ router.get('/folders/:id', (req,res,next) => {
     .from('folders')
     .where('id',`${id}`)
     .then((folder) => {
-      if (folder) {
-        res.json(folder[0]);
-      } else {
+        if (folder.length === 0) {
         const err = new Error();
         err.status=404;
         next(err);
-      }
+        } else {
+          res.json(folder[0]);
+        }
     })
   
     .catch((err) => {
-      console.log(err);
+      err.status = 404;
+      next(err);
     });
 });
 

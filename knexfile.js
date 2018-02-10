@@ -10,7 +10,7 @@ module.exports = {
   },
   test: {
     client: 'pg',
-    connection: process.env.DATABASE_URL ||  {
+    connection: 'postgres://hmlbvgfy:GWS5Qlr9eticsOVNMSpqC8oT1vDd01yp@elmer.db.elephantsql.com:5432/hmlbvgfy' ||  {
       user:'dev',
       database: 'notefultest'
     }
