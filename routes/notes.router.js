@@ -181,9 +181,6 @@ router.post('/notes', (req, res, next) => {
     newItem.folder_id = folder_id;
   }
 
-
-
-
   /***** Never trust users - validate input *****/
   if (!newItem.title) {
     const err = new Error('Missing `title` in request body');
@@ -221,7 +218,7 @@ router.post('/notes', (req, res, next) => {
       treeize.setOptions({output: { prune:false}});
       treeize.grow(note);
       const hydrated = treeize.getData();
-      res.status(201).json(hydrated[0]);
+      res.location(`${req.originalUrl}/${note.id}`).status(201).json(hydrated[0]);
 
     })
     .catch(err => next(err));

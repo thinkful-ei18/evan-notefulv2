@@ -1,6 +1,4 @@
 --`psql -U dev -f ./db/noteful.2.sql -d noteful-app`
-SELECT CURRENT_DATE;
-
 DROP TABLE IF EXISTS notes;
 
 CREATE TABLE notes (

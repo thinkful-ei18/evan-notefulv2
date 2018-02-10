@@ -3,16 +3,21 @@
 module.exports = {
   development: {
     client: 'pg',
-    connection:    { 
+    connection: 'postgres://hmlbvgfy:GWS5Qlr9eticsOVNMSpqC8oT1vDd01yp@elmer.db.elephantsql.com:5432/hmlbvgfy'   || { 
       user: 'dev',
       database: 'noteful-app'
-    }, 
-    // debug: true, // http://knexjs.org/#Installation-debug
-    pool: {min : 1 , max : 2}
+    }
+  },
+  test: {
+    client: 'pg',
+    connection: process.env.DATABASE_URL ||  {
+      user:'dev',
+      database: 'notefultest'
+    }
   },
   production: {
     client: 'pg',
-    connection: process.env.DATABASE_URL
+    connection: 'postgres://hmlbvgfy:GWS5Qlr9eticsOVNMSpqC8oT1vDd01yp@elmer.db.elephantsql.com:5432/hmlbvgfy' || process.env.DATABASE_URL
   }
 };
 
