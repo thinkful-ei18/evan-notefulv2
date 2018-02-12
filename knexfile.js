@@ -17,7 +17,7 @@ module.exports = {
   },
   production: {
     client: 'pg',
-    connection: 'postgres://hmlbvgfy:GWS5Qlr9eticsOVNMSpqC8oT1vDd01yp@elmer.db.elephantsql.com:5432/hmlbvgfy' || process.env.DATABASE_URL
+    connection: process.env.DATABASE_URL || 'postgres://hmlbvgfy:GWS5Qlr9eticsOVNMSpqC8oT1vDd01yp@elmer.db.elephantsql.com:5432/hmlbvgfy' 
   }
 };
 

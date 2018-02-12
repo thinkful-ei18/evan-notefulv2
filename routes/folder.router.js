@@ -24,15 +24,14 @@ router.get('/folders/:id', (req,res,next) => {
     .from('folders')
     .where('id',`${id}`)
     .then((folder) => {
-        if (folder.length === 0) {
+      if (folder.length === 0) {
         const err = new Error();
         err.status=404;
         next(err);
-        } else {
-          res.json(folder[0]);
-        }
+      } else {
+        res.json(folder[0]);
+      }
     })
-  
     .catch((err) => {
       err.status = 404;
       next(err);
@@ -65,7 +64,7 @@ router.put('/folders/:id', (req,res) => {
     .catch(err => console.log(err));
 });
 
-router.delete('/folders/:id', (req,res) => {
+router.delete('/folders/:id', (req,res,next) => {
   const { id } = req.params;
   
   knex('folders')
@@ -74,7 +73,7 @@ router.delete('/folders/:id', (req,res) => {
     .then((response) => {
       res.status(204).json(response);
     })
-    .catch(err => console.log(err));
+    .catch(err => next(err));
 });
 
 
