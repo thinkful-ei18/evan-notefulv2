@@ -7,6 +7,7 @@ $(document).ready(function () {
   api.search('/v2/notes')
     .then(response => {
       store.notes = response;
+      noteful.render();
     });
 
   api.search('/v2/folders')
